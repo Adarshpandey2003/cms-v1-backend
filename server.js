@@ -9,7 +9,10 @@ const authRoutes        = require('./routes/auth');
 const applicationRoutes = require('./routes/applications');
 const documentRoutes    = require('./routes/documents');
 const commentRoutes     = require('./routes/comments');
-
+const adminAgentsRouter       = require('./routes/adminAgents');
+const adminApplicationsRouter = require('./routes/adminApplications');
+const adminReviewers    = require('./routes/adminReviewers');
+const adminApplications = require('./routes/adminApplications');
 const app = express();
 
 // — Disable ETags so clients always get a 200 + full body
@@ -37,6 +40,11 @@ app.use(
   '/uploads',
   express.static(path.join(__dirname, 'uploads'))
 );
+app.use('/api/admin/agents',       adminAgentsRouter);
+app.use('/api/admin/applications', adminApplicationsRouter);
+
+app.use('/api/admin/reviewers',    adminReviewers);
+app.use('/api/admin/applications', adminApplications);
 // Error handler
 app.use(errorHandler);
 

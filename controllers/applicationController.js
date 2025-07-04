@@ -43,9 +43,54 @@ exports.getApplication = async (req, res, next) => {
 };
 
 exports.createApplication = async (req, res, next) => {
+  const {
+    agent_id,
+    student_name,
+    mobile,
+    email,
+    country,
+    state,
+    university,
+    course_name,
+    course_url
+  } = req.body;
+
   try {
-    const app = await Application.create(req.body);
-    res.status(201).json(app);
+    // 1) Find the reviewer with the fewest active applications
+    const reviewerRes = await pool.query(`
+      SELECT u.id
+        FROM users u
+        LEFT JOIN applications a
+          ON a.reviewer_id = u.id
+        WHERE u.role = 'reviewer'
+        GROUP BY u.id
+        ORDER BY COUNT(a.*) ASC
+        LIMIT 1
+    `);
+    const reviewer_id = reviewerRes.rows[0]?.id || null;
+
+    // 2) Insert the application including that reviewer
+    const { rows } = await pool.query(
+      `INSERT INTO applications
+         (agent_id, student_name, mobile, email,
+          country, state, university,
+          course_name, course_url, status, reviewer_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'draft',$10)
+       RETURNING *`,
+      [
+        agent_id,
+        student_name,
+        mobile,
+        email,
+        country,
+        state,
+        university,
+        course_name,
+        course_url,
+        reviewer_id
+      ]
+    );
+    res.status(201).json(rows[0]);
   } catch (err) {
     next(err);
   }
